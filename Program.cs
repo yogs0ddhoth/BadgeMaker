@@ -4,7 +4,7 @@
   {
     async static Task Main(string[] args)
     {
-        List<Employee> employees = PeopleFetcher.GetEmployees();
+        List<Employee> employees = await PeopleFetcher.GetEmployees();
         Util.PrintEmployees(employees);
         Util.WriteCSV(employees);
         await Util.MakeBadges(employees);
