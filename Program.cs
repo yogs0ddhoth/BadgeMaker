@@ -35,11 +35,13 @@
     }
 
 
-    static void Main(string[] args)
+    async static Task Main(string[] args)
     {
         List<Employee> employees = GetEmployees();
         Util.PrintEmployees(employees);
         Util.WriteCSV(employees);
+        await Util.MakeBadges(employees);
+
     }
 
     void HelloWorld() 
