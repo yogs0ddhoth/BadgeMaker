@@ -92,6 +92,7 @@ namespace CatWorx.BadgeMaker
             SKData data = finalImage.Encode();
             data.SaveTo(File.OpenWrite(string.Format("data/{0}_badge.png", employee.GetId())));
         }
+        
         async public static Task MakeBadge(Employee employee)
         {
             using (HttpClient client = new HttpClient())
