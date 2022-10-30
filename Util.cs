@@ -45,8 +45,7 @@ namespace CatWorx.BadgeMaker
                 }
             } // class instance initialized in the head is dropped from memory once scope ends
         }
-
-        async public static Task MakeBadge(Employee employee, HttpClient client)
+        async public static Task WriteBadge(Employee employee, HttpClient client)
         {
             int BADGE_WIDTH = 669;
             int BADGE_HEIGHT = 1044;
@@ -60,40 +59,44 @@ namespace CatWorx.BadgeMaker
             int EMPLOYEE_NAME_Y = 600;
             int EMPLOYEE_ID_Y = 730;
 
-            using (client)
+            // create an SKImage instance from the Employee.photoUrl
+            SKImage photo = SKImage.FromEncodedData(
+                await client.GetStreamAsync(employee.GetPhotoUrl()));
+            SKImage background = SKImage.FromEncodedData(File.OpenRead("badge.png"));
+
+            SKBitmap badge = new SKBitmap(BADGE_WIDTH, BADGE_HEIGHT);
+            SKCanvas canvas = new SKCanvas(badge); //wraps the bitmap allowing for edits to be made
+            
+            // put employee data into the bitmap
+            canvas.DrawImage(background, new SKRect(0, 0, BADGE_WIDTH, BADGE_HEIGHT));
+            canvas.DrawImage(photo, new SKRect(PHOTO_LEFT_X, PHOTO_TOP_Y, PHOTO_RIGHT_X, PHOTO_BOTTOM_Y));
+            
+            SKPaint paint = new SKPaint {
+                TextSize = 42.0f,
+                IsAntialias = true,
+                Color = SKColors.White,
+                IsStroke = false,
+                TextAlign = SKTextAlign.Center,
+                Typeface = SKTypeface.FromFamilyName("Arial")
+            };
+            canvas.DrawText(employee.GetCompanyName(), BADGE_WIDTH/2f, COMPANY_NAME_Y, paint);
+            
+            paint.Color = SKColors.Black;
+            canvas.DrawText(employee.GetFullName(), BADGE_WIDTH/2f, EMPLOYEE_NAME_Y, paint);
+            
+            paint.Typeface = SKTypeface.FromFamilyName("Courier New");
+            canvas.DrawText(employee.GetId().ToString(), BADGE_WIDTH/2f, EMPLOYEE_ID_Y, paint);
+            
+            // create new file
+            SKImage finalImage = SKImage.FromBitmap(badge);
+            SKData data = finalImage.Encode();
+            data.SaveTo(File.OpenWrite(string.Format("data/{0}_badge.png", employee.GetId())));
+        }
+        async public static Task MakeBadge(Employee employee)
+        {
+            using (HttpClient client = new HttpClient())
             {
-                // create an SKImage instance from the Employee.photoUrl
-                SKImage photo = SKImage.FromEncodedData(
-                    await client.GetStreamAsync(employee.GetPhotoUrl()));
-                SKImage background = SKImage.FromEncodedData(File.OpenRead("badge.png"));
-
-                SKBitmap badge = new SKBitmap(BADGE_WIDTH, BADGE_HEIGHT);
-                SKCanvas canvas = new SKCanvas(badge); //wraps the bitmap allowing for edits to be made
-
-                // put employee data into the bitmap
-                canvas.DrawImage(background, new SKRect(0, 0, BADGE_WIDTH, BADGE_HEIGHT));
-                canvas.DrawImage(photo, new SKRect(PHOTO_LEFT_X, PHOTO_TOP_Y, PHOTO_RIGHT_X, PHOTO_BOTTOM_Y));
-
-                SKPaint paint = new SKPaint {
-                    TextSize = 42.0f,
-                    IsAntialias = true,
-                    Color = SKColors.White,
-                    IsStroke = false,
-                    TextAlign = SKTextAlign.Center,
-                    Typeface = SKTypeface.FromFamilyName("Arial")
-                };
-                canvas.DrawText(employee.GetCompanyName(), BADGE_WIDTH/2f, COMPANY_NAME_Y, paint);
-
-                paint.Color = SKColors.Black;
-                canvas.DrawText(employee.GetFullName(), BADGE_WIDTH/2f, EMPLOYEE_NAME_Y, paint);
-
-                paint.Typeface = SKTypeface.FromFamilyName("Courier New");
-                canvas.DrawText(employee.GetId().ToString(), BADGE_WIDTH/2f, EMPLOYEE_ID_Y, paint);
-
-                // create new file
-                SKImage finalImage = SKImage.FromBitmap(badge);
-                SKData data = finalImage.Encode();
-                data.SaveTo(File.OpenWrite(string.Format("data/{0}_badge.png", employee.GetId())));
+                await WriteBadge(employee, client);
             }
         }
         async public static Task MakeBadges(List<Employee> employees)
@@ -103,7 +106,7 @@ namespace CatWorx.BadgeMaker
                 int count = employees.Count;
                 for (int i = 0; i < count; i++)
                 {
-                    await MakeBadge(employees[i], client);
+                    await WriteBadge(employees[i], client);
                 }
             }
         }
