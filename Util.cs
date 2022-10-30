@@ -45,7 +45,7 @@ namespace CatWorx.BadgeMaker
                 }
             } // class instance initialized in the head is dropped from memory once scope ends
         }
-        async public static Task WriteBadge(Employee employee, HttpClient client)
+        async static Task WriteBadge(Employee employee, HttpClient client)
         {
             int BADGE_WIDTH = 669;
             int BADGE_HEIGHT = 1044;
